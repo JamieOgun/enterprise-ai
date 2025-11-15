@@ -44,5 +44,7 @@ def execute_query(query: str) -> dict:
     except Exception as exc:
         return {"error": str(exc)}
 
+mcp_app = mcp.http_app()  # Add this line
+
 if __name__ == "__main__":
     mcp.run()
