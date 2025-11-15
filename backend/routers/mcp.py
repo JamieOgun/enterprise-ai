@@ -1,7 +1,7 @@
 from fastmcp import FastMCP
 from database import DatabaseConnection
 import openai
-from data import initial_mcp_instances
+from data import load_mcp_instances
 
 mcp = FastMCP("My Server")
 
@@ -22,27 +22,14 @@ def generate_sql_query(query: str) -> dict:
     
     return {"sql_query": sql_query}
 
-
 @mcp.tool
-def get_database_context() -> str:  # Change to str
+def get_database_context() -> str:
     """Get the database context"""
     try:
-        request = mcp.get_http_request()
-        instance_id = request.query_params.get("mcp_name")
-
-        if not instance_id:
-            return "Error: No instance_id found in request"
-        
-        mcp_instance = next((mcp for mcp in initial_mcp_instances if mcp["id"] == instance_id), None)
-        
-        if not mcp_instance:
-            return "Error: MCP instance not found"
-        
-        allowed_tables = mcp_instance["allowedTables"]
         
         if DB.connection is None:
             DB.connect()
-        return DB.build_schema_context(schemas=allowed_tables)  # Can return string directly
+        return DB.build_schema_context()  # Can return string directly
     except Exception as exc:
         return f"Error: {exc}"
 
@@ -58,7 +45,7 @@ def execute_query(query: str) -> dict:
     except Exception as exc:
         return {"error": str(exc)}
 
-mcp_app = mcp.http_app()  # Add this line
+mcp_app = mcp.http_app() 
 
 if __name__ == "__main__":
     mcp.run()

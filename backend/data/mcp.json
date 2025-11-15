@@ -1,14 +1,5 @@
 [
   {
-    "id": "cde35be6-8012-485b-9d10-c88fc9502500",
-    "name": "MCP test",
-    "description": "description",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp/cde35be6-8012-485b-9d10-c88fc9502500",
-    "allowedTables": [
-      "sales"
-    ]
-  },
-  {
     "id": "1",
     "name": "Sales Analytics MCP",
     "description": "Access sales data including revenue, customer information, and transaction history. Perfect for sales forecasting and customer analysis.",

@@ -1,19 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
 from data import load_mcp_instances, save_mcp_instances
-import uuid
 
 router = APIRouter()
 
 BASE_URL = "https://enterprise-ai.onrender.com"
 
 # Pydantic models for request/response
-class MCPInstanceCreate(BaseModel):
-    name: str
-    description: Optional[str] = ""
-    allowedTables: List[str]
-
 class MCPInstance(BaseModel):
     id: str
     name: str
@@ -40,32 +34,6 @@ def get_mcp_instance(instance_id: str):
         raise HTTPException(status_code=404, detail="MCP instance not found")
     
     return instance
-
-@router.post("/mcp", response_model=MCPInstance, status_code=201)
-def create_mcp_instance(mcp_data: MCPInstanceCreate):
-    """Create a new MCP instance"""
-    instances = load_mcp_instances()
-    
-    # Generate new ID
-    new_id = str(uuid.uuid4())
-    
-    # Generate URL based on instance ID
-    url = f"{BASE_URL}/llm/mcp/{new_id}"
-    
-    # Create new instance
-    new_instance = {
-        "id": new_id,
-        "name": mcp_data.name,
-        "description": mcp_data.description,
-        "url": url,
-        "allowedTables": mcp_data.allowedTables
-    }
-    
-    # Insert at the beginning of the list (newest first)
-    instances.insert(0, new_instance)
-    save_mcp_instances(instances)
-    
-    return new_instance
 
 @router.delete("/mcp/{instance_id}", status_code=204)
 def delete_mcp_instance(instance_id: str):
