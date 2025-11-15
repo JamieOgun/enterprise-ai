@@ -1,4 +1,4 @@
-# Enterprise AI Hackathon - OMNI MCP
+# AI DataBridge
 
 A full-stack application for managing and sharing organization data through Model Context Protocol (MCP) instances. This platform allows you to create secure, shareable MCP endpoints that provide LLMs with controlled access to specific database tables.
 
