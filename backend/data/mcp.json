@@ -1,71 +1,59 @@
 [
   {
-    "id": "6373a3ea-26ba-4862-846f-97454035d9f5",
+    "id": "3decf747-8b4d-40df-b64c-e2860d0a1b71",
     "name": "test",
-    "description": "test",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=6373a3ea-26ba-4862-846f-97454035d9f5",
+    "description": "",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=3decf747-8b4d-40df-b64c-e2860d0a1b71",
     "allowedTables": [
-      "warehouse"
+      "Sales"
     ]
   },
   {
-    "id": "1",
+    "id": "1f84b633-8bde-451f-8dd6-6f9f566ec280",
     "name": "Sales Analytics MCP",
     "description": "Access sales data including revenue, customer information, and transaction history. Perfect for sales forecasting and customer analysis.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=1",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=1f84b633-8bde-451f-8dd6-6f9f566ec280",
     "allowedTables": [
-      "sales",
-      "customers",
-      "transactions",
-      "products"
+      "Sales"
     ]
   },
   {
-    "id": "2",
-    "name": "HR Management MCP",
-    "description": "Manage employee data, departments, and organizational structure. Query employee records, roles, and performance metrics.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=2",
+    "id": "237c532a-001f-4c9b-a4ae-752106da369e",
+    "name": "HR & People Management MCP",
+    "description": "Manage employee data, people records, and organizational structure. Query employee records, roles, and people information.",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=237c532a-001f-4c9b-a4ae-752106da369e",
     "allowedTables": [
-      "employees",
-      "departments",
-      "roles",
-      "performance_reviews"
+      "Application"
     ]
   },
   {
-    "id": "3",
-    "name": "Inventory System MCP",
+    "id": "6b1e08c7-1aad-4c90-a618-9ad66a3643c7",
+    "name": "Inventory & Warehouse MCP",
     "description": "Track inventory levels, stock movements, and warehouse data. Monitor product availability and supply chain information.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=3",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=6b1e08c7-1aad-4c90-a618-9ad66a3643c7",
     "allowedTables": [
-      "inventory",
-      "warehouses",
-      "stock_movements",
-      "suppliers"
+      "Warehouse"
     ]
   },
   {
-    "id": "4",
-    "name": "Financial Reporting MCP",
-    "description": "Access financial data including accounts, transactions, budgets, and financial reports. Ideal for accounting and financial analysis.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=4",
+    "id": "2fe06b43-e4aa-477d-a55d-6953c7c2d35f",
+    "name": "Purchasing & Supply Chain MCP",
+    "description": "Access purchasing data including suppliers, purchase orders, and supplier transactions. Ideal for supply chain management.",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=2fe06b43-e4aa-477d-a55d-6953c7c2d35f",
     "allowedTables": [
-      "accounts",
-      "transactions",
-      "budgets",
-      "financial_reports"
+      "Purchasing"
     ]
   },
   {
-    "id": "5",
-    "name": "Customer Support MCP",
-    "description": "Query customer support tickets, interactions, and resolution data. Track customer satisfaction and support metrics.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=5",
+    "id": "be3943e4-fabe-42d5-bac4-65524d142a99",
+    "name": "Complete Business Operations MCP",
+    "description": "Full access to all business data including sales, purchasing, warehouse, and application data. Comprehensive business intelligence.",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=be3943e4-fabe-42d5-bac4-65524d142a99",
     "allowedTables": [
-      "tickets",
-      "interactions",
-      "resolutions",
-      "customer_feedback"
+      "Sales",
+      "Purchasing",
+      "Warehouse",
+      "Application"
     ]
   }
 ]

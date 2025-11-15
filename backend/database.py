@@ -142,26 +142,22 @@ class DatabaseConnection:
     def build_schema_context(self, schemas: list = None, key_tables_only: bool = True) -> str:
         """Build compact schema - only key tables and important columns, filtered by allowed tables"""
         key_tables = {
-            'Sales': ['Customers', 'Orders', 'OrderLines', 'Invoices'],
-            'Warehouse': ['StockItems', 'StockItemHoldings'],
+            'Sales': ['Customers', 'Orders', 'OrderLines', 'Invoices', 'InvoiceLines', 'CustomerTransactions', 'BuyingGroups', 'CustomerCategories', 'SpecialDeals'],
+            'Purchasing': ['Suppliers', 'PurchaseOrders', 'PurchaseOrderLines', 'SupplierCategories', 'SupplierTransactions'],
+            'Warehouse': ['StockItems', 'StockItemHoldings', 'StockItemTransactions', 'StockGroups', 'Colors', 'PackageTypes', 'ColdRoomTemperatures', 'VehicleTemperatures'],
+            'Application': ['People', 'Cities', 'Countries', 'StateProvinces', 'DeliveryMethods', 'PaymentMethods', 'TransactionTypes', 'SystemParameters'],
         }
         
-        # Normalize allowed tables to lowercase for comparison
         allowed_tables_lower = [table.lower() for table in (schemas or [])]
         
         context_parts = ["## Key Tables\n"]
         
         for schema, tables in key_tables.items():
-            # Filter tables if schemas are provided
             filtered_tables = []
             for table in tables:
-                # Check if table name matches any allowed table (case-insensitive)
-                # Match by full table name or just the table name part
                 table_lower = table.lower()
                 schema_lower = schema.lower()
                 
-                # Check if table name matches directly (e.g., "customers" matches "Customers")
-                # Or if schema.table matches (e.g., "sales.customers" matches "Sales.Customers")
                 if not schemas:
                     # No filtering, include all tables
                     filtered_tables.append(table)
@@ -214,15 +210,15 @@ if __name__ == "__main__":
     # print(db.build_schema_context())
 
     # Get all tables
-    # all_tables = db.get_tables()
-    # print(all_tables)
+    all_tables = db.get_tables()
+    print(all_tables)
 
     # # Or get tables by schema
     # sales_tables = db.get_tables(schema='Sales')
     # print(sales_tables)
 
     # # Or get all schemas first
-    # schemas = db.get_schemas()
-    # print(schemas)
+    schemas = db.get_schemas()
+    print(schemas)
     
     db.close()

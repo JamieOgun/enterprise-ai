@@ -8,6 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Database, Copy, Check, Trash2, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface MCPInstance {
   id: string;
@@ -19,37 +27,41 @@ interface MCPInstance {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-const categoryColors: Record<string, { border: string; icon: string; badge: string }> = {
-  sales: {
-    border: "border-l-blue-500",
-    icon: "text-blue-600",
-    badge: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
-  },
-  hr: {
-    border: "border-l-purple-500",
-    icon: "text-purple-600",
-    badge: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800"
-  },
-  inventory: {
-    border: "border-l-green-500",
-    icon: "text-green-600",
-    badge: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
-  },
-  finance: {
-    border: "border-l-amber-500",
-    icon: "text-amber-600",
-    badge: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
-  },
-  support: {
-    border: "border-l-pink-500",
-    icon: "text-pink-600",
-    badge: "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950 dark:text-pink-300 dark:border-pink-800"
-  },
-  default: {
-    border: "border-l-slate-500",
-    icon: "text-slate-600",
-    badge: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-950 dark:text-slate-300 dark:border-slate-800"
+// Color scheme based on number of allowed tables
+const getColorsByTableCount = (count: number): { border: string; icon: string; badge: string } => {
+  const colorSchemes: Record<number, { border: string; icon: string; badge: string }> = {
+    1: {
+      border: "border-l-blue-500",
+      icon: "text-blue-600",
+      badge: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
+    },
+    2: {
+      border: "border-l-green-500",
+      icon: "text-green-600",
+      badge: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+    },
+    3: {
+      border: "border-l-purple-500",
+      icon: "text-purple-600",
+      badge: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800"
+    },
+    4: {
+      border: "border-l-amber-500",
+      icon: "text-amber-600",
+      badge: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
+    }
+  };
+
+  // For 5+ tables, use pink/red
+  if (count >= 5) {
+    return {
+      border: "border-l-pink-500",
+      icon: "text-pink-600",
+      badge: "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950 dark:text-pink-300 dark:border-pink-800"
+    };
   }
+
+  return colorSchemes[count] || colorSchemes[1];
 };
 
 export default function Home() {
@@ -57,12 +69,19 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    allowedTables: ""
+    allowedTables: [] as string[]
   });
+
+  const availableCategories = [
+    { value: "Sales", label: "Sales", description: "Customers, Orders, Invoices, CustomerTransactions" },
+    { value: "Purchasing", label: "Purchasing", description: "Suppliers, PurchaseOrders, SupplierTransactions" },
+    { value: "Warehouse", label: "Warehouse", description: "StockItems, StockItemHoldings, StockItemTransactions" },
+    { value: "Application", label: "Application", description: "People, Cities, Countries, DeliveryMethods" },
+  ];
 
   // Fetch MCP instances on mount
   useEffect(() => {
@@ -100,27 +119,18 @@ export default function Home() {
   const handleAddMCP = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.allowedTables) {
-      setError("Name and Allowed Tables are required.");
+    if (!formData.name || formData.allowedTables.length === 0) {
+      setError("Name and at least one category are required.");
       return;
     }
 
     try {
       setError(null);
-      const allowedTables = formData.allowedTables
-        .split(",")
-        .map(table => table.trim())
-        .filter(table => table.length > 0);
-
-      if (allowedTables.length === 0) {
-        setError("Please provide at least one allowed table");
-        return;
-      }
 
       const requestBody = {
         name: formData.name,
         description: formData.description || "",
-        allowedTables: allowedTables
+        allowedTables: formData.allowedTables
       };
 
       const response = await fetch(`${API_BASE_URL}/mcp`, {
@@ -140,9 +150,9 @@ export default function Home() {
       setFormData({
         name: "",
         description: "",
-        allowedTables: ""
+        allowedTables: []
       });
-      setShowAddForm(false);
+      setIsModalOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create MCP instance");
     }
@@ -170,20 +180,30 @@ export default function Home() {
   };
 
   const cancelForm = () => {
-    setShowAddForm(false);
+    setIsModalOpen(false);
     setFormData({
       name: "",
       description: "",
-      allowedTables: ""
+      allowedTables: []
     });
   };
 
-  const getCategoryColors = (category?: string) => {
-    return categoryColors[category || "default"] || categoryColors.default;
+  const toggleCategory = (category: string) => {
+    setFormData(prev => ({
+      ...prev,
+      allowedTables: prev.allowedTables.includes(category)
+        ? prev.allowedTables.filter(c => c !== category)
+        : [...prev.allowedTables, category]
+    }));
+  };
+
+  const getTableCountColors = (allowedTables: string[]) => {
+    const count = allowedTables.length;
+    return getColorsByTableCount(count);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-8">
       <div className="mx-auto max-w-6xl space-y-8">
         {error && (
           <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive border border-destructive/20">
@@ -199,7 +219,10 @@ export default function Home() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Add MCP Server Card */}
-            <Card className="flex flex-col border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary/50 transition-colors bg-gradient-to-br from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-950">
+            <Card 
+              onClick={() => setIsModalOpen(true)}
+              className="flex flex-col border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary/50 transition-colors bg-white dark:from-slate-900/50 dark:to-slate-950 cursor-pointer hover:shadow-md shadow-sm"
+            >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1 flex-1">
@@ -215,78 +238,20 @@ export default function Home() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col space-y-4">
-                {!showAddForm ? (
-                  <Button
-                    onClick={() => setShowAddForm(true)}
-                    variant="outline"
-                    className="w-full mt-auto"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New MCP Server
-                  </Button>
-                ) : (
-                  <form onSubmit={handleAddMCP} className="space-y-4 flex-1 flex flex-col">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">MCP Server Name *</Label>
-                      <Input
-                        id="name"
-                        placeholder="e.g., Marketing Analytics MCP"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        placeholder="Describe what this MCP instance provides access to..."
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="allowedTables">Allowed Tables *</Label>
-                      <Input
-                        id="allowedTables"
-                        placeholder="sales, customers, products"
-                        value={formData.allowedTables}
-                        onChange={(e) => setFormData({ ...formData, allowedTables: e.target.value })}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Enter table names separated by commas
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2 mt-auto">
-                      <Button type="submit" className="flex-1">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add MCP Server
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={cancelForm}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                )}
+              <CardContent className="flex-1 flex flex-col items-center justify-center py-8">
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <Plus className="h-8 w-8" />
+                  <p className="text-sm font-medium">Click to add new MCP Server</p>
+                </div>
               </CardContent>
             </Card>
 
             {mcpInstances.map((mcp) => {
-              const colors = getCategoryColors("default");
+              const colors = getTableCountColors(mcp.allowedTables);
               return (
               <Card 
                 key={mcp.id} 
-                className={`flex flex-col border-l-4 ${colors.border} shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-950/50`}
+                className={`flex flex-col border-l-4 ${colors.border} shadow-md hover:shadow-lg transition-all duration-200 bg-white dark:from-slate-900 dark:to-slate-950/50`}
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
@@ -365,7 +330,7 @@ export default function Home() {
         )}
 
         {/* Info Card */}
-        <Card className="border-l-4 border-l-slate-500 bg-gradient-to-br from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-950">
+        <Card className="border-l-4 border-l-slate-500 bg-white shadow-md dark:from-slate-900/50 dark:to-slate-950">
           <CardHeader>
             <CardTitle className="text-xl font-semibold tracking-tight">About MCP Instances</CardTitle>
             <CardDescription className="text-sm leading-relaxed">
@@ -382,11 +347,89 @@ export default function Home() {
               <p>
                 Click on any MCP card to view its endpoint URL and see which database tables are
                 accessible through that instance.
-          </p>
-        </div>
+              </p>
+            </div>
           </CardContent>
         </Card>
-        </div>
+
+        {/* Add MCP Server Modal */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New MCP Server</DialogTitle>
+              <DialogDescription>
+                Create a new MCP instance to share organization data with your LLMs
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleAddMCP} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="modal-name">MCP Server Name *</Label>
+                <Input
+                  id="modal-name"
+                  placeholder="e.g., Marketing Analytics MCP"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="modal-description">Description</Label>
+                <Textarea
+                  id="modal-description"
+                  placeholder="Describe what this MCP instance provides access to..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Allowed Tables (Categories) *</Label>
+                <div className="space-y-2 border rounded-md p-3 bg-slate-50 dark:bg-slate-900 max-h-[300px] overflow-y-auto">
+                  {availableCategories.map((category) => (
+                    <div key={category.value} className="flex items-start space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`modal-category-${category.value}`}
+                        checked={formData.allowedTables.includes(category.value)}
+                        onChange={() => toggleCategory(category.value)}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <label
+                        htmlFor={`modal-category-${category.value}`}
+                        className="flex-1 cursor-pointer text-sm"
+                      >
+                        <div className="font-medium">{category.label}</div>
+                        <div className="text-xs text-muted-foreground">{category.description}</div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {formData.allowedTables.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {formData.allowedTables.join(", ")}
+                  </p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={cancelForm}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add MCP Server
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
