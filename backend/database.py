@@ -1,0 +1,214 @@
+"""
+Database Connection Script for WideWorldImporters
+Connects to SQL Server and retrieves data programmatically
+"""
+
+import pyodbc
+import pandas as pd
+import os
+
+class DatabaseConnection:
+    def __init__(self):
+        """Initialize database connection parameters"""
+        self.server = 'pepsaco-db-standard.c1oqimeoszvd.eu-west-2.rds.amazonaws.com'
+        self.port = '1433'
+        self.database = 'WideWorldImporters_Base'
+        self.username = 'hackathon_ro_01'
+        self.password = 'F2p!rA8#'
+        self.connection = None
+    
+    def connect(self):
+        """Connect to the database"""
+        try:
+            self.connection = pyodbc.connect(
+                f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.server};PORT={self.port};DATABASE={self.database};UID={self.username};PWD={self.password}"
+            )
+            
+            def convert_unsupported(value):
+                """Convert unsupported types to string"""
+                return str(value) if value is not None else None
+            
+            print("Connected to the database")
+        except pyodbc.Error as e:
+            print(f"Error connecting to the database: {e}")
+            return None
+        return self.connection
+
+    def execute_query(self, query: str) -> pd.DataFrame:
+        """Execute a query and return the result as a pandas dataframe"""
+        cursor = None
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(query)
+            
+            columns = [column[0] for column in cursor.description] if cursor.description else []
+            
+            rows = []
+            try:
+                # Try to fetch all at once
+                raw_rows = cursor.fetchall()
+                for row in raw_rows:
+                    rows.append(list(row))
+            except Exception as fetch_error:
+                error_msg = str(fetch_error)
+                if "not yet supported" in error_msg or "-151" in error_msg:
+                    print(f"Warning: Some columns have unsupported SQL types. Converting to string...")
+                    cursor.execute(query)
+                    row = cursor.fetchone()
+                    while row:
+                        converted_row = []
+                        for val in row:
+                            if val is None:
+                                converted_row.append(None)
+                            else:
+                                try:
+                                    converted_row.append(val)
+                                except Exception:
+                                    converted_row.append(str(val))
+                        rows.append(converted_row)
+                        row = cursor.fetchone()
+                else:
+                    raise fetch_error
+            
+            if rows and columns:
+                return pd.DataFrame(rows, columns=columns)
+            else:
+                return pd.DataFrame(columns=columns)
+        except Exception as e:
+            print(f"Error executing query: {e}")
+            import traceback
+            traceback.print_exc()
+            return pd.DataFrame() 
+        finally:
+            if cursor:
+                cursor.close()
+        
+    def get_table_data(self, schema: str, table: str, limit: int = 100) -> pd.DataFrame:
+        """Get data from a specific table"""
+        try:
+            col_query = f"""
+            SELECT COLUMN_NAME, DATA_TYPE 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
+            ORDER BY ORDINAL_POSITION
+            """
+            col_info = self.execute_query(col_query)
+            
+            if col_info.empty:
+                print(f"Warning: Could not get column info for {schema}.{table}")
+                query = f"SELECT TOP {limit} * FROM {schema}.{table}"
+                return self.execute_query(query)
+            
+            safe_cols = []
+            for _, row in col_info.iterrows():
+                col_name = row['COLUMN_NAME']
+                data_type = str(row['DATA_TYPE']).lower()
+                if data_type in ['geography', 'geometry', 'hierarchyid', 'sql_variant']:
+                    safe_cols.append(f"CONVERT(NVARCHAR(MAX), [{col_name}]) AS [{col_name}]")
+                else:
+                    safe_cols.append(f"[{col_name}]")
+            
+            if safe_cols:
+                safe_query = f"SELECT TOP {limit} {', '.join(safe_cols)} FROM {schema}.{table}"
+                return self.execute_query(safe_query)
+            else:
+                query = f"SELECT TOP {limit} * FROM {schema}.{table}"
+                return self.execute_query(query)
+        except Exception as e:
+            print(f"Error getting table data: {e}")
+            import traceback
+            traceback.print_exc()
+            return pd.DataFrame()
+
+    def get_schemas(self) -> pd.DataFrame:
+        """Get all schemas in the database"""
+        query = "SELECT DISTINCT TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA"
+        return self.execute_query(query)
+
+    def get_tables(self, schema: str = None) -> pd.DataFrame:
+        """Get all tables, optionally filtered by schema"""
+        if schema:
+            query = f"""
+            SELECT TABLE_SCHEMA, TABLE_NAME 
+            FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_SCHEMA = '{schema}' AND TABLE_TYPE = 'BASE TABLE'
+            ORDER BY TABLE_SCHEMA, TABLE_NAME
+            """
+        else:
+            query = """
+            SELECT TABLE_SCHEMA, TABLE_NAME 
+            FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_TYPE = 'BASE TABLE'
+            ORDER BY TABLE_SCHEMA, TABLE_NAME
+            """
+        return self.execute_query(query)
+
+    def get_table_schema(self, schema: str, table: str) -> pd.DataFrame:
+        """Get detailed column information for a table"""
+        query = f"""
+        SELECT 
+            COLUMN_NAME,
+            DATA_TYPE,
+            IS_NULLABLE,
+            CHARACTER_MAXIMUM_LENGTH,
+            NUMERIC_PRECISION,
+            NUMERIC_SCALE,
+            COLUMN_DEFAULT
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
+        ORDER BY ORDINAL_POSITION
+        """
+        return self.execute_query(query)
+
+    def get_sample_data(self, schema: str, table: str, limit: int = 5) -> pd.DataFrame:
+        """Get sample data from a table"""
+        return self.get_table_data(schema, table, limit=limit)
+
+    def build_schema_context(self, schemas: list = None, key_tables_only: bool = True) -> str:
+        """Build compact schema - only key tables and important columns"""
+        key_tables = {
+            'Sales': ['Customers', 'Orders', 'OrderLines', 'Invoices'],
+            'Warehouse': ['StockItems', 'StockItemHoldings'],
+        }
+        
+        context_parts = ["## Key Tables\n"]
+        
+        for schema, tables in key_tables.items():
+            context_parts.append(f"\n### {schema}\n")
+            for table in tables:
+                col_info = self.get_table_schema(schema, table)
+                if not col_info.empty:
+                    cols = col_info.head(10)
+                    col_list = [f"{row['COLUMN_NAME']}:{row['DATA_TYPE']}" 
+                            for _, row in cols.iterrows()]
+                    context_parts.append(f"{schema}.{table}({', '.join(col_list)})\n")
+        
+        return "\n".join(context_parts)  
+              
+    def close(self):
+        """Close the database connection"""
+        if self.connection:
+            self.connection.close()
+            print("Database connection closed")
+        else:
+            print("No database connection to close")
+
+if __name__ == "__main__":
+    db = DatabaseConnection()
+    db.connect()
+    
+    print(db.build_schema_context())
+
+    # Get all tables
+    # all_tables = db.get_tables()
+    # print(all_tables)
+
+    # # Or get tables by schema
+    # sales_tables = db.get_tables(schema='Sales')
+    # print(sales_tables)
+
+    # # Or get all schemas first
+    # schemas = db.get_schemas()
+    # print(schemas)
+    
+    db.close()
