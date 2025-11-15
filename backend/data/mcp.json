@@ -1,0 +1,76 @@
+[
+  {
+    "id": "cde35be6-8012-485b-9d10-c88fc9502500",
+    "name": "MCP test",
+    "description": "description",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp/cde35be6-8012-485b-9d10-c88fc9502500",
+    "allowedTables": [
+      "sales"
+    ]
+  },
+  {
+    "id": "1",
+    "name": "Sales Analytics MCP",
+    "description": "Access sales data including revenue, customer information, and transaction history. Perfect for sales forecasting and customer analysis.",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp/sales",
+    "allowedTables": [
+      "sales",
+      "customers",
+      "transactions",
+      "products"
+    ],
+    "category": "sales"
+  },
+  {
+    "id": "2",
+    "name": "HR Management MCP",
+    "description": "Manage employee data, departments, and organizational structure. Query employee records, roles, and performance metrics.",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp/hr",
+    "allowedTables": [
+      "employees",
+      "departments",
+      "roles",
+      "performance_reviews"
+    ],
+    "category": "hr"
+  },
+  {
+    "id": "3",
+    "name": "Inventory System MCP",
+    "description": "Track inventory levels, stock movements, and warehouse data. Monitor product availability and supply chain information.",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp/inventory",
+    "allowedTables": [
+      "inventory",
+      "warehouses",
+      "stock_movements",
+      "suppliers"
+    ],
+    "category": "inventory"
+  },
+  {
+    "id": "4",
+    "name": "Financial Reporting MCP",
+    "description": "Access financial data including accounts, transactions, budgets, and financial reports. Ideal for accounting and financial analysis.",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp/finance",
+    "allowedTables": [
+      "accounts",
+      "transactions",
+      "budgets",
+      "financial_reports"
+    ],
+    "category": "finance"
+  },
+  {
+    "id": "5",
+    "name": "Customer Support MCP",
+    "description": "Query customer support tickets, interactions, and resolution data. Track customer satisfaction and support metrics.",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp/support",
+    "allowedTables": [
+      "tickets",
+      "interactions",
+      "resolutions",
+      "customer_feedback"
+    ],
+    "category": "support"
+  }
+]

@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
 from database import DatabaseConnection
 import openai
+from data import initial_mcp_instances
 
 mcp = FastMCP("My Server")
 
@@ -9,7 +10,7 @@ DB.connect()
 
 @mcp.tool
 def generate_sql_query(query: str) -> dict:
-    """Generate a SQL query based on the user's request"""
+    """Generate a SQL query based on the user's request and allowed tables"""
     response = openai.chat.completions.create(
         model="GPT5",
         messages=[
@@ -26,9 +27,22 @@ def generate_sql_query(query: str) -> dict:
 def get_database_context() -> str:  # Change to str
     """Get the database context"""
     try:
+        request = mcp.get_http_request()
+        instance_id = request.query_params.get("mcp_name")
+
+        if not instance_id:
+            return "Error: No instance_id found in request"
+        
+        mcp_instance = next((mcp for mcp in initial_mcp_instances if mcp["id"] == instance_id), None)
+        
+        if not mcp_instance:
+            return "Error: MCP instance not found"
+        
+        allowed_tables = mcp_instance["allowedTables"]
+        
         if DB.connection is None:
             DB.connect()
-        return DB.build_schema_context()  # Can return string directly
+        return DB.build_schema_context(schemas=allowed_tables)  # Can return string directly
     except Exception as exc:
         return f"Error: {exc}"
 
