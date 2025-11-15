@@ -3,15 +3,14 @@ Database Connection Script for WideWorldImporters
 Connects to SQL Server and retrieves data programmatically
 """
 
-import pyodbc
+import pymssql
 import pandas as pd
 import os
-
 class DatabaseConnection:
     def __init__(self):
         """Initialize database connection parameters"""
         self.server = 'pepsaco-db-standard.c1oqimeoszvd.eu-west-2.rds.amazonaws.com'
-        self.port = '1433'
+        self.port = 1433  # pymssql expects int, not string
         self.database = 'WideWorldImporters_Base'
         self.username = 'hackathon_ro_01'
         self.password = 'F2p!rA8#'
@@ -20,55 +19,31 @@ class DatabaseConnection:
     def connect(self):
         """Connect to the database"""
         try:
-            self.connection = pyodbc.connect(
-                f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.server};PORT={self.port};DATABASE={self.database};UID={self.username};PWD={self.password}"
+            self.connection = pymssql.connect(
+                server=self.server,
+                port=self.port,
+                database=self.database,
+                user=self.username,
+                password=self.password
             )
-            
-            def convert_unsupported(value):
-                """Convert unsupported types to string"""
-                return str(value) if value is not None else None
-            
             print("Connected to the database")
-        except pyodbc.Error as e:
+            return self.connection
+        except Exception as e:
             print(f"Error connecting to the database: {e}")
-            return None
-        return self.connection
+            raise
 
     def execute_query(self, query: str) -> pd.DataFrame:
         """Execute a query and return the result as a pandas dataframe"""
         cursor = None
         try:
-            cursor = self.connection.cursor()
+            cursor = self.connection.cursor(as_dict=False)
             cursor.execute(query)
             
+            # Get column names from cursor description
             columns = [column[0] for column in cursor.description] if cursor.description else []
             
-            rows = []
-            try:
-                # Try to fetch all at once
-                raw_rows = cursor.fetchall()
-                for row in raw_rows:
-                    rows.append(list(row))
-            except Exception as fetch_error:
-                error_msg = str(fetch_error)
-                if "not yet supported" in error_msg or "-151" in error_msg:
-                    print(f"Warning: Some columns have unsupported SQL types. Converting to string...")
-                    cursor.execute(query)
-                    row = cursor.fetchone()
-                    while row:
-                        converted_row = []
-                        for val in row:
-                            if val is None:
-                                converted_row.append(None)
-                            else:
-                                try:
-                                    converted_row.append(val)
-                                except Exception:
-                                    converted_row.append(str(val))
-                        rows.append(converted_row)
-                        row = cursor.fetchone()
-                else:
-                    raise fetch_error
+            # Fetch all rows
+            rows = cursor.fetchall()
             
             if rows and columns:
                 return pd.DataFrame(rows, columns=columns)
