@@ -3,7 +3,7 @@
     "id": "1",
     "name": "Sales Analytics MCP",
     "description": "Access sales data including revenue, customer information, and transaction history. Perfect for sales forecasting and customer analysis.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp/sales",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=1",
     "allowedTables": [
       "sales",
       "customers",
@@ -16,7 +16,7 @@
     "id": "2",
     "name": "HR Management MCP",
     "description": "Manage employee data, departments, and organizational structure. Query employee records, roles, and performance metrics.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp/hr",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=2",
     "allowedTables": [
       "employees",
       "departments",
@@ -29,7 +29,7 @@
     "id": "3",
     "name": "Inventory System MCP",
     "description": "Track inventory levels, stock movements, and warehouse data. Monitor product availability and supply chain information.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp/inventory",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=3",
     "allowedTables": [
       "inventory",
       "warehouses",
@@ -42,7 +42,7 @@
     "id": "4",
     "name": "Financial Reporting MCP",
     "description": "Access financial data including accounts, transactions, budgets, and financial reports. Ideal for accounting and financial analysis.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp/finance",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=4",
     "allowedTables": [
       "accounts",
       "transactions",
@@ -55,7 +55,7 @@
     "id": "5",
     "name": "Customer Support MCP",
     "description": "Query customer support tickets, interactions, and resolution data. Track customer satisfaction and support metrics.",
-    "url": "https://enterprise-ai.onrender.com/llm/mcp/support",
+    "url": "https://enterprise-ai.onrender.com/llm/mcp?instance_id=5",
     "allowedTables": [
       "tickets",
       "interactions",

@@ -51,4 +51,4 @@ def delete_mcp_instance(instance_id: str):
 
 @router.get("/llm/mcp")
 def get_mcp():
-    return {"mcp_url": f"{BASE_URL}/llm/mcp/"}
+    return {"mcp_url": f"{BASE_URL}/llm/mcp?instance_id={id}"}

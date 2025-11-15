@@ -29,34 +29,22 @@ def get_database_context() -> str:
     try:
         request = get_http_request()
         
-        # Extract instance_id from URL path
-        path = request.url.path
-        path_parts = path.strip("/").split("/")
-        
-        instance_id = None
-        if "mcp" in path_parts:
-            mcp_index = path_parts.index("mcp")
-            if mcp_index + 1 < len(path_parts):
-                instance_id = path_parts[mcp_index + 1]
-        
-        # Try query params (for MCP Inspector and direct API calls)
-        if not instance_id:
-            instance_id = request.query_params.get("id") or request.query_params.get("instance_id")
-        
-        # Try headers as fallback
-        if not instance_id:
-            instance_id = request.headers.get("X-MCP-Instance-ID")
+        # Get instance_id from query parameter (primary method, matching reference pattern)
+        instance_id = request.query_params.get("instance_id")
         
         if not instance_id:
-            return "Error: No instance_id found in request. Please provide instance_id in URL path (/llm/mcp/{instance_id}), query parameter (?id={instance_id}), or header (X-MCP-Instance-ID)."
+            return "Error: No instance_id found in request"
         
-        # Load fresh instances from file
+        # Load MCP instances from JSON file
         mcp_instances = load_mcp_instances()
+        
+        # Look up MCP instance by id
         mcp_instance = next((mcp for mcp in mcp_instances if mcp["id"] == instance_id), None)
         
         if not mcp_instance:
-            return f"Error: MCP instance not found for ID: {instance_id}"
+            return "Error: Invalid instance ID"
         
+        # Get allowed tables for this instance
         allowed_tables = mcp_instance.get("allowedTables", [])
         
         if DB.connection is None:
